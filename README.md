@@ -1,6 +1,6 @@
 # VENCE
 
-Code for our AAAI 2023 paper: Converge to the Truth: Factual Error Correction via Iterative Constrained Editing
+Code for our AAAI 2023 paper: [Converge to the Truth: Factual Error Correction via Iterative Constrained Editing](https://arxiv.org/abs/2211.12130).
 ![avatar](img.png)
 ## Dependencies
 ```shell
@@ -49,3 +49,13 @@ python main/main.py \
 --es_dis 8
 ```
  
+## Citation
+If you find our work useful to your research, please kindly cite our paper (pre-print, official bibtex coming soon.):
+```latex
+@article{chen2022converge,
+  title={Converge to the Truth: Factual Error Correction via Iterative Constrained Editing},
+  author={Chen, Jiangjie and Xu, Rui and Zeng, Wenxuan and Sun, Changzhi and Li, Lei and Xiao, Yanghua},
+  journal={arXiv preprint arXiv:2211.12130},
+  year={2022}
+}
+```
