@@ -1,0 +1,13 @@
+python finetune.py \
+--model_name_or_path t5-base \
+--do_train \
+--do_eval \
+--train_file /home/xr/fec_last/vence/t5/data/t5_train.json \
+--validation_file /home/xr/fec_last/vence/t5/data/t5_val.json \
+--output_dir /home/xr/fec_last/vence/t5/model_2 \
+--overwrite_output_dir \
+--per_device_train_batch_size=4 \
+--per_device_eval_batch_size=4 \
+--predict_with_generate \
+--text_column input \
+--summary_column output
