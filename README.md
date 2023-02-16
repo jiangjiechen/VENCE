@@ -6,9 +6,24 @@ Code for our AAAI 2023 paper: [Converge to the Truth: Factual Error Correction v
 ```shell
 pip install -r requirements.txt
 ```
-## Download data
-Can be downloaded from this [Google Drive folder](https://drive.google.com/drive/folders/1hzwg5NtVUB_cfXiADkSanCq0JjaQ87tV). This is the FEVER intermediate annotation data released by James Thorne et al in Paper：Evidence-based Factual Error Correction
-## Training the t5 model
+## Download data 
+
+The dataset can be downloaded from this [Google Drive folder](https://drive.google.com/drive/folders/1hzwg5NtVUB_cfXiADkSanCq0JjaQ87tV). This is the FEVER intermediate annotation data released by [Evidence-based Factual Error Correction](https://aclanthology.org/2021.acl-long.256/).
+
+### Data processing
+
+To train the proposal model, the claim and evidence data should be processed as this:
+1. Set `prefix` as `Please recover the part of the claim that was masked according to the evidence.`.
+2. Organize the claim and evidence as `substituted entity: evidence: {evidence} claim: {claim}` or `substituted token: evidence: {evidence} claim: {claim}`
+
+## Download pre-trained checkpoints
+
+Pre-trained checkpoints for T5 and verification models are stored [here](https://drive.google.com/drive/folders/1Hw3PeXZhlqHY5umbh_uscLu3RexBkeXt?usp=sharing).
+
+Note that the verification model is off-the-shelf and could be replaced with other fact verification models.
+
+
+## Training the T5 model
 ```shell
 python t5/finetune.py \
 --model_name_or_path t5-base \
@@ -24,6 +39,8 @@ python t5/finetune.py \
 --text_column input \
 --summary_column output
 ```
+
+
 ## Training the verfication model
 ```shell
 python verfication/finetune.py \
