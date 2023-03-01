@@ -2,12 +2,12 @@ python finetune.py \
 --model_name_or_path xlm-roberta-base \
 --do_train \
 --do_eval \
---train_file /home/xr/fec_last/vence/verfication/data/train.json \
---validation_file /home/xr/fec_last/vence/verfication/data/valid.json \
+--train_file ${PJ_HOME}/verfication/data/train.json \
+--validation_file ${PJ_HOME}/verfication/data/valid.json \
 --per_device_train_batch_size=16 \
 --per_device_eval_batch_size=8 \
 --max_seq_length 512 \
 --learning_rate 2e-5 \
 --num_train_epochs 3 \
---output_dir /home/xr/Fudan/fec_last/vence/verfication/model \
+--output_dir ${PJ_HOME}/verfication/model \
 --overwrite_output_dir \
