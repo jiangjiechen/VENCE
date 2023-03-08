@@ -1,8 +1,8 @@
 '''
 energy
-1、Language Modeling Score
-2、Truthfulness Score
-3、Hamming Distance Score
+1. Language Modeling Score
+2. Truthfulness Score
+3. Hamming Distance Score
 '''
 
 import os
