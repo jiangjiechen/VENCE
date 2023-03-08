@@ -4,9 +4,11 @@ import torch.nn as nn
 from transformers import pipeline
 from functools import reduce
 import numpy as np
+import os
 
-tokenizer = AutoTokenizer.from_pretrained("/home/xr/Fudan/fec_last/VENCE/t5/model_2/checkpoint-15000")
-model = AutoModelForSeq2SeqLM.from_pretrained("/home/xr/Fudan/fec_last/VENCE/t5/model_2/checkpoint-15000")
+
+tokenizer = AutoTokenizer.from_pretrained(f"{os.environ['PJ_HOME']}/t5/model/checkpoint-15000")
+model = AutoModelForSeq2SeqLM.from_pretrained(f"{os.environ['PJ_HOME']}/t5/model/checkpoint-15000")
 model.eval()
 
 def generate(text,candi_token=''):
