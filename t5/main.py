@@ -5,8 +5,8 @@ from transformers import pipeline
 from functools import reduce
 import numpy as np
 
-tokenizer = AutoTokenizer.from_pretrained("/home/xr/Fudan/fec_last/vence/t5/model_2/checkpoint-10000")
-model = AutoModelForSeq2SeqLM.from_pretrained("/home/xr/Fudan/fec_last/vence/t5/model_2/checkpoint-10000")
+tokenizer = AutoTokenizer.from_pretrained("/home/xr/Fudan/fec_last/VENCE/t5/model_2/checkpoint-15000")
+model = AutoModelForSeq2SeqLM.from_pretrained("/home/xr/Fudan/fec_last/VENCE/t5/model_2/checkpoint-15000")
 model.eval()
 
 def generate(text,candi_token=''):
@@ -38,8 +38,6 @@ def entity_pro_generate(text,entity_list):
         score.append(ppl)
     return [s/sum(score) for s in score]
 
-
-
 if __name__=='__main__':
-    test_text="substituted one token : [evidence] : In the 2020 US election, Democrat Joe Biden defeated Republican Donald Trump and was successfully elected as the 46th President of the United States. [claim] : Joe Biden [MASK] the 2020 US election."
+    test_text="substituted token : [evidence] : In the 2020 US election, Democrat Joe Biden defeated Republican Donald Trump and was successfully elected as the 46th President of the United States. [claim] : Joe Biden [MASK] the 2020 US election."
     print(generate(test_text,'lost'))

@@ -19,3 +19,4 @@ def entity_extract(sentence):
 
 if __name__=='__main__':
     print(entity_extract(['SummerSlam is crushed by the WWE.', 'Alexandra Daddario was not born on March 16, 1986.']))
+    print(entity_extract(['who are you','i']))

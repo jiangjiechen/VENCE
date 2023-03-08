@@ -9,7 +9,6 @@ model.eval()
 # ['aaa','b','aaa'] ['aaa b'] [] [[0,1]
 # ['aa','a','b','aa','a'] ['aaa'] [[0,1],[3,4]] [[0,1],[3,4]]
 def entity_position_com(claim, entity_position,sp_token):
-    #print('claim:{},entity:{},sp_token:{} '.format(claim,entity_position,sp_token))
     temp_entity_position=entity_position[:]
     return_position = []
     tokenizer_list = [t[1:] if t[0] == 'Ġ' else t for t in tokenizer.tokenize(claim)]
@@ -46,6 +45,8 @@ def entity_position_com(claim, entity_position,sp_token):
     return return_position
 
 def entity_position_com2(claim, entity_position):
+    print('claim:',claim)
+    print('entity_position:',entity_position)
     return_position = []
     tokenizer_list = [t[1:] if t[0] == 'Ġ' else t for t in tokenizer.tokenize(claim)]
     for entity in entity_position:
@@ -121,7 +122,6 @@ def only_pro(claim,evidence):
                     labels=None)
     return torch.softmax(outputs[0], dim=1)[0].tolist()
 
-
 def token_logit(claim, evidence, claim_entity):
     final_prob = {'entity': [], 'token': []}
     tokenized_input_seq_pair = tokenizer.encode_plus(claim, evidence,
@@ -132,7 +132,6 @@ def token_logit(claim, evidence, claim_entity):
     # 将claim通过空格分割
     tokenizer_blank=claim.split()
     spilt_token=t_token_pos(tokenizer_blank,tokenizer_list_raw)
-    #print(spilt_token)
     input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids']).long().unsqueeze(0)
 
     token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0)
@@ -152,12 +151,10 @@ def token_logit(claim, evidence, claim_entity):
             out_logit = param.grad[1:len(tokenizer_list_raw) + 1]
             temp_prob = nn.Softmax(dim=1)(torch.Tensor([out_logit.tolist()]))
             entity_pos = entity_position_com2(claim, claim_entity)
-            #print('entity pos:{}'.format(entity_pos))
             token_pos = list(range(len(tokenizer_list_raw)))
             sp_token_pos=spilt_token
             id_token=0
             id_entity=0
-            id_ptoken=0
             for nnn in entity_pos:
                 if type(nnn) == int:
                     token_pos.remove(nnn)
@@ -169,7 +166,6 @@ def token_logit(claim, evidence, claim_entity):
                 for mn in mm:
                     sp_token_sum.append(mn)
             token_pos=[item for item in token_pos if item not in sp_token_sum]
-            # entity_pos=filter(lambda x: x not in sp_token_pos, entity_pos)
             for n in token_pos:
                 token_sum = {'token':tokenizer_list_raw[n],'id':id_token, 'pos': n, 'prob': temp_prob[0][n].item()}
                 final_prob['token'].append(token_sum)
@@ -204,12 +200,9 @@ def token_logit(claim, evidence, claim_entity):
                         if set(nnn)<set(e):
                             for n in nnn[1:]:
                                 he_nn.append(n)
-                    #print(he_nn)
                     zb_entity=''
                     for _,eee in enumerate(e):
                         if _!=0:
-                            # print('debug-----------')
-                            # print(eee,zb_entity)
                             if eee not in he_nn:
                                 zb_entity=zb_entity+' '+tokenizer_list_raw[eee]
                             else:
@@ -220,8 +213,6 @@ def token_logit(claim, evidence, claim_entity):
                     if entity_sum['pos'] not in [mt['pos'] for mt in final_prob['entity']]:
                         final_prob['entity'].append(entity_sum)
                         id_entity += 1
-            # final_prob['entity']=list(set(final_prob['entity']))
-            # final_prob['token']=list(set(final_prob['token']))
     return tokenizer_list_raw,final_logit, final_prob, spilt_token
 
 
@@ -230,7 +221,5 @@ def token_logit(claim, evidence, claim_entity):
 if __name__ == '__main__':
     claim = 'Joe Biden wins in the 2020 US election'
     evidence = 'In the 2020 US election, Democrat Joe Biden defeated Republican Donald Trump and was successfully elected as the 46th President of the United States.'
-    #print(token_logit(claim, evidence, ['2020 US election','Joe Biden']))
-    # print(only_pro(claim, evidence))
-    # p_entity
-    print(entity_position_com2('University of Chicago Law School is ranked first in the 2016 QS World University Rankings.',['University of Chicago Law School','the 2016 QS World University Rankings']))
+    print(entity_position_com2('Watertown, Massachusetts is in Massachusetts',['Massachusetts', 'Watertown']))
+
