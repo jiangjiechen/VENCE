@@ -3,25 +3,25 @@
 2. sample an edit action(insert,delete,replace)
 3. Sample a corrected token/entity to replace the masked token/entity
 '''
+from energy_model import language_modeling_score, bert_ppl
+from t5.main import generate, entity_pro_generate
+from verfication.main import token_logit, only_pro
+from ner.ner import entity_extract
+from transformers import BertTokenizer, AutoModelForMaskedLM, AutoTokenizer
+import numpy as np
+import random
+import distance
+import torch
+import argparse
+import transformers
+import json
+import jsonlines
 import os
 import sys
 import math
 
 sys.path.append('..')
 
-import jsonlines
-import json
-import transformers
-import argparse
-import torch
-import distance
-import random
-import numpy as np
-from transformers import BertTokenizer, AutoModelForMaskedLM, AutoTokenizer
-from ner.ner import entity_extract
-from verfication.main import token_logit, only_pro
-from t5.main import generate, entity_pro_generate
-from energy_model import language_modeling_score, bert_ppl
 
 actions_3 = ['insert', 'delete', 'replace']
 actions_2 = ['entity', 'token']
@@ -166,7 +166,8 @@ def remove_sublists(a, b):
 
 # accept rate
 def accept_rate(energy_score_f, energy_score_b, g_forward, g_backward):
-    pro = (g_backward * math.exp(-energy_score_b)) / (g_forward * math.exp(-energy_score_f))
+    pro = (g_backward * math.exp(-energy_score_b)) / \
+        (g_forward * math.exp(-energy_score_f))
     final_rate = min(1, pro)
     return final_rate
 
@@ -180,7 +181,8 @@ def main(data, args):
         iter_claim[0] = add_space_before_punctuation(raw_claim)
         claim_ner_result = entity_extract([raw_claim])
         evidence_ner_result = entity_extract([evidence])
-        all_entity = list(set([en[0] for en in claim_ner_result[0]] + [en[0] for en in evidence_ner_result[0]]))
+        all_entity = list(set(
+            [en[0] for en in claim_ner_result[0]] + [en[0] for en in evidence_ner_result[0]]))
         # print(all_entity)
         for j in range(args.iter_num - 1):
             # if new entity
@@ -206,7 +208,8 @@ def main(data, args):
             # action_2 : entity or token
             if act_2 == actions_2[1]:  # token
                 token_prob = final_prob['token']
-                token_sample_id, pos_pro = normal_sample([tt['prob'] for tt in token_prob], value=True)
+                token_sample_id, pos_pro = normal_sample(
+                    [tt['prob'] for tt in token_prob], value=True)
                 token_sample_pos = 0
                 token_sample_token = ''
                 for n in token_prob:
@@ -222,16 +225,20 @@ def main(data, args):
                                 spilt_token.pop(_)
                         for _, k in enumerate(spilt_token):
                             if k[0] > token_sample_pos[-1]:
-                                spilt_token[_] = [k[iii] - token_len + 1 for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] - token_len + 1 for iii in range(len(k))]
                     if type(token_sample_pos) == int:
                         tokenizer_list_raw[token_sample_pos] = MASK
                     else:
                         for nn in range(len(token_sample_pos)):
                             tokenizer_list_raw.pop(token_sample_pos[0])
                         tokenizer_list_raw.insert(token_sample_pos[0], MASK)
-                    mask_token_claim = ' '.join(merge_token(tokenizer_list_raw, spilt_token))
+                    mask_token_claim = ' '.join(
+                        merge_token(tokenizer_list_raw, spilt_token))
                     gen_claim, token_pro, backward_pro = generate(
-                        'substituted one token : ' + '[evidence] :' + evidence + ' [claim] : ' + mask_token_claim,
+                        'substituted one token : ' +
+                        '[evidence] :' + evidence +
+                        ' [claim] : ' + mask_token_claim,
                         candi_token=token_sample_token)
                     if args.eval == False:
                         print(gen_claim)
@@ -239,8 +246,10 @@ def main(data, args):
                         tokenizer_list_raw[token_sample_pos] = gen_claim
                     else:
                         tokenizer_list_raw.pop(token_sample_pos[0])
-                        tokenizer_list_raw.insert(token_sample_pos[0], gen_claim)
-                    tokenizer_list_raw = merge_token(tokenizer_list_raw, spilt_token)
+                        tokenizer_list_raw.insert(
+                            token_sample_pos[0], gen_claim)
+                    tokenizer_list_raw = merge_token(
+                        tokenizer_list_raw, spilt_token)
                     correct_claim = ' '.join(tokenizer_list_raw)
                     # prob
                     forward_pro = token_pro
@@ -248,17 +257,20 @@ def main(data, args):
                     if type(token_sample_pos) == list:
                         for _, k in enumerate(spilt_token):
                             if k[0] > token_sample_pos[-1]:
-                                spilt_token[_] = [k[iii] + 1 for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] + 1 for iii in range(len(k))]
                     else:
                         for _, k in enumerate(spilt_token):
                             if k[0] > token_sample_pos:
-                                spilt_token[_] = [k[iii] + 1 for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] + 1 for iii in range(len(k))]
                     if type(token_sample_pos) == int:
                         change_pos = token_sample_pos
                     else:
                         change_pos = token_sample_pos[0]
                     tokenizer_list_raw.insert(change_pos, MASK)
-                    mask_token_claim = ' '.join(merge_token(tokenizer_list_raw, spilt_token))
+                    mask_token_claim = ' '.join(
+                        merge_token(tokenizer_list_raw, spilt_token))
                     gen_claim, token_pro, _ = generate(
                         'substituted one token : ' + '[evidence] :' + evidence + ' [claim] : ' + mask_token_claim)
                     if args.eval == False:
@@ -267,7 +279,8 @@ def main(data, args):
                         tokenizer_list_raw[token_sample_pos] = gen_claim
                     else:
                         tokenizer_list_raw[token_sample_pos[-1]] = gen_claim
-                    tokenizer_list_raw = merge_token(tokenizer_list_raw, spilt_token)
+                    tokenizer_list_raw = merge_token(
+                        tokenizer_list_raw, spilt_token)
                     correct_claim = ' '.join(tokenizer_list_raw)
                     # print(correct_claim)
                     # prob
@@ -293,11 +306,13 @@ def main(data, args):
                                 spilt_token.pop(_)
                         for _, k in enumerate(spilt_token):
                             if k[0] > token_sample_pos[-1]:
-                                spilt_token[_] = [k[iii] - token_len for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] - token_len for iii in range(len(k))]
                     else:
                         for _, k in enumerate(spilt_token):
                             if k[0] > token_sample_pos:
-                                spilt_token[_] = [k[iii] - 1 for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] - 1 for iii in range(len(k))]
                     if type(token_sample_pos) == int:
                         tokenizer_list_raw.pop(token_sample_pos)
                         back_tokenizer_list_raw.pop(token_sample_pos)
@@ -306,19 +321,25 @@ def main(data, args):
                         for nn in range(len(token_sample_pos)):
                             tokenizer_list_raw.pop(token_sample_pos[0])
                             back_tokenizer_list_raw.pop(token_sample_pos[0])
-                        back_tokenizer_list_raw.insert(token_sample_pos[0], MASK)
-                    tokenizer_list_raw = merge_token(tokenizer_list_raw, spilt_token)
-                    back_tokenizer_list_raw = merge_token(back_tokenizer_list_raw, spilt_token)
+                        back_tokenizer_list_raw.insert(
+                            token_sample_pos[0], MASK)
+                    tokenizer_list_raw = merge_token(
+                        tokenizer_list_raw, spilt_token)
+                    back_tokenizer_list_raw = merge_token(
+                        back_tokenizer_list_raw, spilt_token)
                     correct_claim = ' '.join(tokenizer_list_raw)
                     back_claim = ' '.join(back_tokenizer_list_raw)
                     # prob
                     forward_pro = pos_pro
-                    su = 'substituted one token : ' + '[evidence] :' + evidence + ' [claim] : ' + back_claim
-                    backward_pro = pos_pro * generate(su, candi_token=token_sample_token)[-1]
+                    su = 'substituted one token : ' + \
+                        '[evidence] :' + evidence + ' [claim] : ' + back_claim
+                    backward_pro = pos_pro * \
+                        generate(su, candi_token=token_sample_token)[-1]
             else:  # entity
                 entity_prob = final_prob['entity']
                 if len(entity_prob) != 0:
-                    entity_sample_id, pos_pro = normal_sample([tt['prob'] for tt in entity_prob], value=True)
+                    entity_sample_id, pos_pro = normal_sample(
+                        [tt['prob'] for tt in entity_prob], value=True)
                 else:
                     continue
                 entity_sample_pos = 0
@@ -331,18 +352,23 @@ def main(data, args):
                 if act_3 == actions_3[2]:  # replace
                     if type(entity_sample_pos) == list:
                         entity_len = len(entity_sample_pos)
-                        spilt_token = remove_sublists(spilt_token, entity_sample_pos)
+                        spilt_token = remove_sublists(
+                            spilt_token, entity_sample_pos)
                         for _, k in enumerate(spilt_token):
                             if k[0] > entity_sample_pos[-1]:
-                                spilt_token[_] = [k[iii] - entity_len + 1 for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] - entity_len + 1 for iii in range(len(k))]
                     if type(entity_sample_pos) == int:
                         tokenizer_list_raw[entity_sample_pos] = MASK
                     else:
                         for nn in range(len(entity_sample_pos)):
                             tokenizer_list_raw.pop(entity_sample_pos[0])
                         tokenizer_list_raw.insert(entity_sample_pos[0], MASK)
-                    mask_entity_claim = ' '.join(merge_token(tokenizer_list_raw, spilt_token))
-                    su = ' substituted entity : ' + '[evidence] : ' + evidence + ' [claim] : ' + mask_entity_claim
+                    mask_entity_claim = ' '.join(
+                        merge_token(tokenizer_list_raw, spilt_token))
+                    su = ' substituted entity : ' + \
+                        '[evidence] : ' + evidence + \
+                        ' [claim] : ' + mask_entity_claim
                     # print(su)
                     entity_p_sum = entity_pro_generate(su, all_entity)
                     sample_pos = entity_p_sum.index(max(entity_p_sum))
@@ -353,38 +379,48 @@ def main(data, args):
                         tokenizer_list_raw[entity_sample_pos] = gen_claim
                     else:
                         tokenizer_list_raw.pop(entity_sample_pos[0])
-                        tokenizer_list_raw.insert(entity_sample_pos[0], gen_claim)
-                    tokenizer_list_raw = merge_token(tokenizer_list_raw, spilt_token)
+                        tokenizer_list_raw.insert(
+                            entity_sample_pos[0], gen_claim)
+                    tokenizer_list_raw = merge_token(
+                        tokenizer_list_raw, spilt_token)
                     correct_claim = ' '.join(tokenizer_list_raw)
                     # prob
                     forward_pro = entity_p_sum[sample_pos]
-                    backward_pro = entity_p_sum[all_entity.index(entity_sample_entity)]
+                    backward_pro = entity_p_sum[all_entity.index(
+                        entity_sample_entity)]
                 elif act_3 == actions_3[0]:  # insert
                     if type(entity_sample_pos) == list:
                         for _, k in enumerate(spilt_token):
                             if k[0] > entity_sample_pos[-1]:
-                                spilt_token[_] = [k[iii] + 1 for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] + 1 for iii in range(len(k))]
                     else:
                         for _, k in enumerate(spilt_token):
                             if k[0] > entity_sample_pos:
-                                spilt_token[_] = [k[iii] + 1 for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] + 1 for iii in range(len(k))]
                     if type(entity_sample_pos) == int:
                         change_pos = entity_sample_pos
                     else:
                         change_pos = entity_sample_pos[0]
                     tokenizer_list_raw.insert(change_pos, MASK)
-                    mask_entity_claim = ' '.join(merge_token(tokenizer_list_raw, spilt_token))
-                    su = 'substituted entity : ' + '[evidence] :' + evidence + ' [claim] : ' + mask_entity_claim
+                    mask_entity_claim = ' '.join(
+                        merge_token(tokenizer_list_raw, spilt_token))
+                    su = 'substituted entity : ' + \
+                        '[evidence] :' + evidence + \
+                        ' [claim] : ' + mask_entity_claim
                     gen_claim = all_entity[
                         entity_pro_generate(su, all_entity).index(max(entity_pro_generate(su, all_entity)))]
                     if args.eval == False:
                         print(gen_claim)
                     tokenizer_list_raw.pop(change_pos)
                     tokenizer_list_raw.insert(change_pos, gen_claim)
-                    tokenizer_list_raw = merge_token(tokenizer_list_raw, spilt_token)
+                    tokenizer_list_raw = merge_token(
+                        tokenizer_list_raw, spilt_token)
                     correct_claim = ' '.join(tokenizer_list_raw)
                     # prob
-                    forward_pro = max(entity_pro_generate(su, all_entity)) * pos_pro
+                    forward_pro = max(entity_pro_generate(
+                        su, all_entity)) * pos_pro
                     claim_ner_result_2 = entity_extract([correct_claim])
                     for en in claim_ner_result_2[0]:
                         if en[0] not in all_entity:
@@ -400,14 +436,17 @@ def main(data, args):
                     back_tokenizer_list_raw = tokenizer_list_raw.copy()
                     if type(entity_sample_pos) == list:
                         entity_len = len(entity_sample_pos)
-                        spilt_token = remove_sublists(spilt_token, entity_sample_pos)
+                        spilt_token = remove_sublists(
+                            spilt_token, entity_sample_pos)
                         for _, k in enumerate(spilt_token):
                             if k[0] > entity_sample_pos[-1]:
-                                spilt_token[_] = [k[iii] - entity_len for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] - entity_len for iii in range(len(k))]
                     else:
                         for _, k in enumerate(spilt_token):
                             if k[0] > entity_sample_pos:
-                                spilt_token[_] = [k[iii] - 1 for iii in range(len(k))]
+                                spilt_token[_] = [
+                                    k[iii] - 1 for iii in range(len(k))]
                     if type(entity_sample_pos) == int:
                         tokenizer_list_raw.pop(entity_sample_pos)
                         back_tokenizer_list_raw.pop(entity_sample_pos)
@@ -416,9 +455,12 @@ def main(data, args):
                         for nn in range(len(entity_sample_pos)):
                             tokenizer_list_raw.pop(entity_sample_pos[0])
                             back_tokenizer_list_raw.pop(entity_sample_pos[0])
-                        back_tokenizer_list_raw.insert(entity_sample_pos[0], MASK)
-                    tokenizer_list_raw = merge_token(tokenizer_list_raw, spilt_token)
-                    back_tokenizer_list_raw = merge_token(back_tokenizer_list_raw, spilt_token)
+                        back_tokenizer_list_raw.insert(
+                            entity_sample_pos[0], MASK)
+                    tokenizer_list_raw = merge_token(
+                        tokenizer_list_raw, spilt_token)
+                    back_tokenizer_list_raw = merge_token(
+                        back_tokenizer_list_raw, spilt_token)
                     correct_claim = ' '.join(tokenizer_list_raw)
                     back_claim = ' '.join(back_tokenizer_list_raw)
                     # prob
@@ -429,9 +471,13 @@ def main(data, args):
                             is_new_entity = True
                             break
                     if not is_new_entity:
-                        su = ' substituted entity : ' + '[evidence] : ' + evidence + ' [claim] : ' + back_claim
+                        su = ' substituted entity : ' + \
+                            '[evidence] : ' + evidence + \
+                            ' [claim] : ' + back_claim
                         entity_p_sum = entity_pro_generate(su, all_entity)
-                        backward_pro = pos_pro * entity_p_sum[all_entity.index(entity_sample_entity)]
+                        backward_pro = pos_pro * \
+                            entity_p_sum[all_entity.index(
+                                entity_sample_entity)]
             new_ner_entity = entity_extract([correct_claim])
             for en in new_ner_entity[0]:
                 if en[0] not in all_entity:
@@ -443,7 +489,9 @@ def main(data, args):
                 # less is more
                 def energy_sum(co_claim):
                     ver_score = args.es_ver * only_pro(co_claim, evidence)[2]
-                    dis_score = args.es_dis * distance.levenshtein(co_claim.split(), iter_claim[0].split())
+                    dis_score = args.es_dis * \
+                        distance.levenshtein(
+                            co_claim.split(), iter_claim[0].split())
                     lm_score = args.es_lm * bert_ppl(co_claim)
                     return ver_score, dis_score, lm_score, 0.1 * (ver_score + dis_score + lm_score)
 
